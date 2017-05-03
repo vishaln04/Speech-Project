@@ -44,13 +44,13 @@ function y = repet(x,fs,per)
 
 if nargin < 3, per = [0.8,min(8,(length(x)/fs)/3)]; end                     % Default repeating period range
 
-len = 0.040;                                                                % Analysis window length in seconds (audio stationary around 40 milliseconds)
+len = 0.040;                                                                % Analysis window length in seconds (audio stationary around 40 											milliseconds)
 N = 2.^nextpow2(len*fs);                                                    % Analysis window length in samples (power of 2 for faster FFT)
-win = hamming(N,'periodic');                                                % Analysis window (even N and 'periodic' Hamming for constant overlap-add)
+win = hamming(N);	                                                % Analysis window (even N and 'periodic' Hamming for constant overlap-									add)
 stp = N/2;                                                                  % Analysis step length (N/2 for constant overlap-add)
 
-cof = 100;                                                                  % Cutoff frequency in Hz for the dual high-pass filtering (e.g., singing voice rarely below 100 Hz)
-cof = ceil(cof*(N-1)/fs);                                                   % Cutoff frequency in frequency bins for the dual high-pass filtering (DC component = bin 0)
+cof = 100;                                                                  % Cutoff frequency in Hz for the dual high-pass filtering (e.g., 											singing voice rarely below 100 Hz)
+cof = ceil(cof*(N-1)/fs);                                                   % Cutoff frequency in frequency bins for the dual high-pass 										filtering (DC component = bin 0)
 
 [t,k] = size(x);                                                            % Number of samples and channels
 X = [];
@@ -58,13 +58,13 @@ for i = 1:k                                                                 % Lo
     Xi = stft(x(:,i),win,stp);                                              % Short-Time Fourier Transform (STFT) of channel i
     X = cat(3,X,Xi);                                                        % Concatenate the STFTs
 end
-V = abs(X(1:N/2+1,:,:));                                                    % Magnitude spectrogram (with DC component and without mirrored frequencies)
+V = abs(X(1:N/2+1,:,:));                                                    % Magnitude spectrogram (with DC component and without mirrored 											frequencies)
 
-per = ceil((per*fs+N/stp-1)/stp);                                           % Repeating period in time frames (compensate for STFT zero-padding at the beginning)
+per = ceil((per*fs+N/stp-1)/stp);                                           % Repeating period in time frames (compensate for STFT zero-padding 										at the beginning)
 if numel(per) == 1                                                          % If single value
     p = per;                                                                % Defined repeating period in time frames
 elseif numel(per) == 2                                                      % If two values
-    b = beat_spectrum(mean(V.^2,3));                                        % Beat spectrum of the mean power spectrograms (square to emphasize peaks of periodicitiy)
+    b = beat_spectrum(mean(V.^2,3));                                        % Beat spectrum of the mean power spectrograms (square to emphasize 										peaks of periodicitiy)
     p = repeating_period(b,per);                                            % Estimated repeating period in time frames
 end
 
@@ -179,7 +179,7 @@ function p = repeating_period(b,r)
 b(1) = [];                                                                  % Discard lag 0
 b = b(r(1):r(2));                                                           % Beat spectrum in the repeating period range
 [~,p] = max(b);                                                             % Maximum value in the repeating period range
-p = p+r(1);                                                                 % The repeating period is estimated as the index of the maximum value
+p = p+r(1);                                                                 % The repeating period is estimated as the index of the maximum 											value
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -199,8 +199,8 @@ function M = repeating_mask(V,p)
 r = ceil(m/p);                                                              % Number of repeating segments (including the last one)
 W = [V,nan(n,r*p-m)];                                                       % Padding to have an integer number of segments
 W = reshape(W,[n*p,r]);                                                     % Reshape so that the columns are the segments
-W = [median(W(1:n*(m-(r-1)*p),1:r),2); ...                                  % Median of the parts repeating for all the r segments (including the last one)
-    median(W(n*(m-(r-1)*p)+1:n*p,1:r-1),2)];                                % Median of the parts repeating only for the first r-1 segments (empty if m = r*p)
+W = [median(W(1:n*(m-(r-1)*p),1:r),2); ...                                  % Median of the parts repeating for all the r segments (including 											the last one)
+    median(W(n*(m-(r-1)*p)+1:n*p,1:r-1),2)];                                % Median of the parts repeating only for the first r-1 segments 											(empty if m = r*p)
 W = reshape(repmat(W,[1,r]),[n,r*p]);                                       % Duplicate repeating segment model and reshape back to have [n,r*p]
 W = W(:,1:m);                                                               % Truncate to the original number of frames to have [n,m]
 W = min(V,W);                                                               % For every time-frequency bins, we must have W <= V
